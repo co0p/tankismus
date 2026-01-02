@@ -28,8 +28,23 @@ var actionBindings = map[Action][]ebiten.Key{
 // state caches the current frame's action state.
 var state = map[Action]bool{}
 
-// Poll updates the cached action state from Ebiten's keyboard state.
+// testState and useTestState allow tests to override action state without
+// depending on Ebiten's real keyboard input.
+var (
+	testState    = map[Action]bool{}
+	useTestState bool
+)
+
+// Poll updates the cached action state from Ebiten's keyboard state, unless
+// tests have installed an override via SetActionStateForTest.
 func Poll() {
+	if useTestState {
+		for action := range actionBindings {
+			state[action] = testState[action]
+		}
+		return
+	}
+
 	for action, keys := range actionBindings {
 		pressed := false
 		for _, k := range keys {
@@ -40,6 +55,15 @@ func Poll() {
 		}
 		state[action] = pressed
 	}
+}
+
+// SetActionStateForTest allows tests to directly control the action state
+// without depending on Ebiten's real keyboard state. It is not intended for
+// use in production code.
+func SetActionStateForTest(a Action, down bool) {
+	useTestState = true
+	testState[a] = down
+	state[a] = down
 }
 
 // IsActionDown reports whether the given action is currently active.

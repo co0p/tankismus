@@ -26,6 +26,16 @@ func New(_ interface{}) *Scene {
 	player := w.NewEntity()
 	w.AddComponent(player, &components.Transform{X: 100, Y: 100, Rotation: 0, Scale: 1})
 	w.AddComponent(player, &components.Velocity{})
+	w.AddComponent(player, &components.ControlIntent{})
+	w.AddComponent(player, &components.MovementParams{
+		MaxForwardSpeed:     100,
+		MaxBackwardSpeed:    60,
+		LinearAcceleration:  200,
+		LinearDeceleration:  300,
+		MaxTurnRate:         3,
+		AngularAcceleration: 6,
+		AngularDeceleration: 9,
+	})
 	w.AddComponent(player, &components.Sprite{SpriteID: "player_tank"})
 
 	return &Scene{
@@ -40,15 +50,9 @@ func (s *Scene) OnEnter() {}
 func (s *Scene) OnExit() {}
 
 func (s *Scene) Update(dt float64) {
-	_ = dt
-	// Compute dt based on real time for now.
-	now := time.Now()
-	elapsed := now.Sub(s.lastUpdate).Seconds()
-	s.lastUpdate = now
-
 	input.Poll()
 	systems.InputMovementSystem(s.world, s.player)
-	systems.MovementSystem(s.world, elapsed)
+	systems.MovementSystem(s.world, dt)
 }
 
 func (s *Scene) Draw(screen *ebiten.Image) {
@@ -58,4 +62,14 @@ func (s *Scene) Draw(screen *ebiten.Image) {
 	_ = assets.Load()
 
 	systems.RenderSystem(s.world, screen)
+}
+
+// World exposes the underlying ECS world for testing purposes.
+func (s *Scene) World() *ecs.World {
+	return s.world
+}
+
+// Player returns the player entity ID for testing purposes.
+func (s *Scene) Player() ecs.EntityID {
+	return s.player
 }

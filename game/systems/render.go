@@ -31,6 +31,14 @@ func RenderSystem(world *ecs.World, screen *ebiten.Image) {
 		}
 
 		op := &ebiten.DrawImageOptions{}
+		w, h := img.Size()
+		cx := float64(w) / 2
+		cy := float64(h) / 2
+
+		// Move origin to sprite center, rotate by logical rotation, then move
+		// to world position. Sprites are authored facing +X (to the right).
+		op.GeoM.Translate(-cx, -cy)
+		op.GeoM.Rotate(p.Rotation)
 		op.GeoM.Translate(p.X, p.Y)
 		screen.DrawImage(img, op)
 	}

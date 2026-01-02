@@ -15,6 +15,8 @@ const (
 	TypeSprite
 	TypeCollider
 	TypeProjectile
+	TypeControlIntent
+	TypeMovementParams
 )
 
 // Transform represents position, rotation and uniform scale.
@@ -83,3 +85,26 @@ type Projectile struct {
 }
 
 func (Projectile) Type() ecs.ComponentType { return TypeProjectile }
+
+// ControlIntent represents normalized control input for a tank.
+// Throttle and Turn are expected to be in the range [-1, 1].
+type ControlIntent struct {
+	Throttle float64 `json:"throttle"`
+	Turn     float64 `json:"turn"`
+}
+
+func (ControlIntent) Type() ecs.ComponentType { return TypeControlIntent }
+
+// MovementParams defines how a tank responds to control intent.
+// All values are non-negative configuration parameters.
+type MovementParams struct {
+	MaxForwardSpeed     float64 `json:"maxForwardSpeed"`
+	MaxBackwardSpeed    float64 `json:"maxBackwardSpeed"`
+	LinearAcceleration  float64 `json:"linearAcceleration"`
+	LinearDeceleration  float64 `json:"linearDeceleration"`
+	MaxTurnRate         float64 `json:"maxTurnRate"`
+	AngularAcceleration float64 `json:"angularAcceleration"`
+	AngularDeceleration float64 `json:"angularDeceleration"`
+}
+
+func (MovementParams) Type() ecs.ComponentType { return TypeMovementParams }

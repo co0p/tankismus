@@ -29,3 +29,9 @@ func Load() error {
 func GetSprite(id string) *ebiten.Image {
 	return Registry[id]
 }
+
+// RegisterSpriteForTest allows tests to inject sprites into the registry
+// without loading from disk.
+func RegisterSpriteForTest(id string, img *ebiten.Image) {
+	Registry[id] = img
+}
