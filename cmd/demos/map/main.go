@@ -6,6 +6,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 
 	"github.com/co0p/tankismus/game/scenes/run"
+	"github.com/co0p/tankismus/pkg/input"
 	"github.com/co0p/tankismus/pkg/scene"
 )
 
@@ -18,6 +19,9 @@ func (g *sceneGame) Update() error {
 	// Use a fixed timestep for the demo; the underlying scene logic
 	// already handles dt in seconds.
 	const dt = 1.0 / 60.0
+	if input.ShouldQuit() {
+		return ebiten.Termination
+	}
 	g.manager.Update(dt)
 	return nil
 }
@@ -42,7 +46,8 @@ func main() {
 
 	ebiten.SetWindowTitle("tankismus – map demo")
 	ebiten.SetWindowSize(800, 600)
-	if err := ebiten.RunGame(game); err != nil {
+	ebiten.SetFullscreen(true)
+	if err := ebiten.RunGame(game); err != nil && err != ebiten.Termination {
 		log.Fatal(err)
 	}
 }

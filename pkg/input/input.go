@@ -121,3 +121,11 @@ func IsActionDown(a Action) bool {
 func AnyKeyPressed() bool {
 	return manager.AnyKeyPressed()
 }
+
+// ShouldQuit reports whether the user requested to exit the game via a
+// Ctrl+C key chord. It is intended for use by top-level game loops to
+// terminate the Ebiten run loop gracefully.
+func ShouldQuit() bool {
+	// Require Control to be held and C pressed in the current frame.
+	return ebiten.IsKeyPressed(ebiten.KeyControl) && inpututil.IsKeyJustPressed(ebiten.KeyC)
+}

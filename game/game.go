@@ -6,6 +6,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 
 	"github.com/co0p/tankismus/game/scenes/start"
+	"github.com/co0p/tankismus/pkg/input"
 	"github.com/co0p/tankismus/pkg/scene"
 )
 
@@ -28,6 +29,10 @@ func NewGame() *Game {
 }
 
 func (g *Game) Update() error {
+	if input.ShouldQuit() {
+		return ebiten.Termination
+	}
+
 	now := time.Now()
 	dt := now.Sub(g.lastTime).Seconds()
 	g.lastTime = now

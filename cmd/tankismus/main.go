@@ -12,7 +12,8 @@ func main() {
 	g := game.NewGame()
 	ebiten.SetWindowTitle("tankismus")
 	ebiten.SetWindowSize(800, 600)
-	if err := ebiten.RunGame(g); err != nil {
+	ebiten.SetFullscreen(true)
+	if err := ebiten.RunGame(g); err != nil && err != ebiten.Termination {
 		log.Fatal(err)
 	}
 }
