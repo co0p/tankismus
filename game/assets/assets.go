@@ -3,9 +3,12 @@ package assets
 import (
 	"embed"
 	"errors"
+	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+
+	_ "image/png"
 
 	mappkg "github.com/co0p/tankismus/pkg/map"
 )
@@ -21,14 +24,37 @@ var Registry = map[string]*ebiten.Image{}
 var ErrTileSpriteNotFound = errors.New("assets: tile sprite not found")
 
 // Load loads all core assets into the registry.
-// For now we load a single placeholder tank sprite if present.
+// It is safe to call multiple times; later calls will simply overwrite
+// existing entries with the same IDs.
 func Load() error {
-	// Example: try to load images/tank.png if it exists.
-	img, _, err := ebitenutil.NewImageFromFileSystem(imagesFS, "images/tank.png")
-	if err == nil {
-		Registry["player_tank"] = img
+	entries, err := imagesFS.ReadDir("images")
+	if err != nil {
+		return err
 	}
-	// It's okay if the image is missing; the game can still run.
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		name := entry.Name()
+		if !strings.HasSuffix(name, ".png") {
+			continue
+		}
+
+		img, _, err := ebitenutil.NewImageFromFileSystem(imagesFS, "images/"+name)
+		if err != nil {
+			// Skip images that fail to load; the game can still run,
+			// and ComposeTilemap will surface missing sprites as needed.
+			continue
+		}
+
+		id := strings.TrimSuffix(name, ".png")
+		if id == "tank" {
+			id = "player_tank"
+		}
+		Registry[id] = img
+	}
+
 	return nil
 }
 

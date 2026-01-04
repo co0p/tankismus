@@ -8,11 +8,21 @@ import (
 	"github.com/co0p/tankismus/game/components"
 	"github.com/co0p/tankismus/pkg/ecs"
 	"github.com/co0p/tankismus/pkg/input"
+	mappkg "github.com/co0p/tankismus/pkg/map"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+func newTestLevelMap(t *testing.T) *mappkg.Map {
+	t.Helper()
+	m, err := mappkg.NewGrassMap(1, 3, 2)
+	if err != nil {
+		t.Fatalf("NewGrassMap failed: %v", err)
+	}
+	return m
+}
+
 func TestNewRunScene_HasRequiredPlayerComponents(t *testing.T) {
-	s := New(nil)
+	s := New(newTestLevelMap(t))
 	world := s.World()
 	player := s.Player()
 
@@ -32,7 +42,7 @@ func TestNewRunScene_HasRequiredPlayerComponents(t *testing.T) {
 }
 
 func TestRunScene_UpdateAppliesInputAndMovement(t *testing.T) {
-	s := New(nil)
+	s := New(newTestLevelMap(t))
 	world := s.World()
 	player := s.Player()
 	testMgr := input.NewTestManager()
@@ -64,7 +74,7 @@ func TestNewRunScene_HasMapAndTilemapEntity(t *testing.T) {
 	assets.RegisterSpriteForTest("tileGrass1", img)
 	assets.RegisterSpriteForTest("tileGrass2", img)
 
-	s := New(nil)
+	s := New(newTestLevelMap(t))
 	world := s.World()
 	player := s.Player()
 

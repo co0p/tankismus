@@ -1,7 +1,9 @@
 package run
 
 import (
+	"encoding/json"
 	"image/color"
+	"os"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -24,27 +26,47 @@ type Scene struct {
 }
 
 // New constructs a new run scene with a single player tank.
-func New(_ interface{}) *Scene {
+// If ctx is a *mappkg.Map, it is used as the level map (primarily for tests).
+// Otherwise, the scene attempts to load game/assets/maps/map.json. If loading
+// or validation fails, no level map or tilemap is created.
+func New(ctx interface{}) *Scene {
 	w := ecs.NewWorld()
+	// Ensure core assets, including tile sprites, are loaded before composing
+	// the level tilemap. Load is idempotent.
+	_ = assets.Load()
 
-	// Create a simple grass map for the level.
-	const (
-		mapWidth  = 16
-		mapHeight = 12
-		mapSeed   = 1
-	)
-	levelMap, err := mappkg.NewGrassMap(mapSeed, mapWidth, mapHeight)
-	if err != nil {
-		levelMap = nil
+	// Determine the level map to use.
+	var levelMap *mappkg.Map
+	if m, ok := ctx.(*mappkg.Map); ok && m != nil {
+		levelMap = m
+	} else {
+		// Attempt to load the default JSON map.
+		const defaultMapPath = "game/assets/maps/map.json"
+		file, err := os.Open(defaultMapPath)
+		if err == nil {
+			defer file.Close()
+			dec := json.NewDecoder(file)
+			var loaded mappkg.Map
+			if err := dec.Decode(&loaded); err == nil {
+				// Ensure the loaded map satisfies basic invariants.
+				if err := loaded.ValidateForGenerator(); err == nil {
+					levelMap = &loaded
+				}
+			}
+		}
 	}
 
 	var tilemapEntity ecs.EntityID
 	if levelMap != nil {
 		const tileSize = 16
 		// Compose the tilemap image and register it in the assets registry.
-		if _, err := assets.ComposeTilemap("tilemap_ground", levelMap, tileSize); err == nil {
+		if img, err := assets.ComposeTilemap("tilemap_ground", levelMap, tileSize); err == nil {
+			wImg, hImg := img.Size()
 			tilemapEntity = w.NewEntity()
-			w.AddComponent(tilemapEntity, &components.Transform{X: 0, Y: 0, Rotation: 0, Scale: 1})
+			// Position the tilemap so that its top-left corner aligns with the
+			// world origin. RenderSystem draws sprites centered on their
+			// Transform, so we offset by half the tilemap dimensions.
+			w.AddComponent(tilemapEntity, &components.Transform{X: float64(wImg) / 2, Y: float64(hImg) / 2, Rotation: 0, Scale: 1})
 			w.AddComponent(tilemapEntity, &components.Sprite{SpriteID: "tilemap_ground"})
 			w.AddComponent(tilemapEntity, &components.RenderOrder{Z: 0})
 		}
